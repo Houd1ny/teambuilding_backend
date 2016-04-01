@@ -1,0 +1,108 @@
+Date.prototype.plusDays = function(d){
+  var date = new Date()
+  date.setDate(this.getDate() + d);
+  return date;
+};
+
+var monthNames = ["Січня", "Лютого", "Березня", "Квітня", "Травня", "Червня",
+  "Липня", "Серпня", "Вересня", "Жовтня", "Листопада", "Грудня"];
+var dayNames = ["Понеділок", "Вівторок", "Середа", "Четвер", "П’ятниця", "Субота", "Неділя"];
+
+
+function createWeekSheet() {
+  var newSpreadsheet = createSheetAndMakeCurrent();
+  var daysRange = createDaysRow(newSpreadsheet)
+  var usersCount = createDrinkersColum(newSpreadsheet)
+  fillCells(newSpreadsheet, 2, 2, usersCount, daysRange)
+  setUsersPermision(newSpreadsheet,usersCount, daysRange);
+  addSumFormula(newSpreadsheet,usersCount, daysRange);
+}
+
+function createSheetAndMakeCurrent(){
+  var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var newSheet = activeSpreadsheet.insertSheet(getSheetName())
+  activeSpreadsheet.setActiveSheet(newSheet)
+  return newSheet;
+}
+
+function getSheetName(){
+  var currentDate = new Date();
+ 
+  var first = currentDate.getDate() - currentDate.getDay();
+  var mondayDateObj = new Date(currentDate.setDate(first))
+  var sundayDateObj = mondayDateObj.plusDays(7)
+  
+  var mondayDate = mondayDateObj.getDate()
+  var sundayDate = sundayDateObj.getDate();
+  
+  var mondayDateMonthName = monthNames[mondayDateObj.getMonth() ]
+  var sundayDateMonthName = monthNames[sundayDateObj.getMonth() ]
+  return "Teambuilding(" + mondayDate.toString() + " " + mondayDateMonthName + "-" + sundayDate.toString() + " " + sundayDateMonthName + ")"
+}
+
+function createDrinkersColum(sheet){
+  var activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var users = activeSpreadsheet.getViewers()
+  
+  var emails = users.map(function(userObj){ 
+    return userObj.getEmail();
+  });
+  
+  var startOfUsersRow = 2
+  for (var row = startOfUsersRow; row < emails.length + startOfUsersRow; ++row) {
+    var userRange = sheet.getRange(row, 1, 1, 1);
+    userRange.setValue(emails[row - startOfUsersRow])
+  }
+  
+  sheet.autoResizeColumn(1);
+  return emails.length
+}
+
+function createDaysRow(sheet) {
+  var cell = sheet.getRange("B1:H1");
+  cell.setValues([dayNames]);
+  return 7
+}
+
+function fillCells(sheet, row, col, rowCount, colCount) {
+  var cell = sheet.getRange(row, col, rowCount, colCount);
+  
+  var firtsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var formatedCell = firtsSheet.getRange("A1");
+  formatedCell.copyTo(cell, {formatOnly:true})
+  
+   var rule = SpreadsheetApp.newDataValidation()
+   .requireValueInList(["Норм", "Паснув"], true)
+   .setAllowInvalid(true)
+   .build()
+   cell.setDataValidation(rule);
+}
+
+function setUsersPermision(sheet, usersCount, colCount) {
+  
+  var sheetProtection = sheet.protect().setDescription('Main Protection');
+  sheetProtection.removeEditors(sheetProtection.getEditors())
+  if (sheetProtection.canDomainEdit()) {
+   sheetProtection.setDomainEdit(false);
+  }
+  var userEditField = sheet.getRange(2, 2, usersCount, colCount);
+  sheetProtection.setUnprotectedRanges([userEditField])
+    
+  var startOfUsersRow = 2
+  for (var row = startOfUsersRow; row < usersCount + startOfUsersRow; ++row) {
+    var userRange = sheet.getRange(row, 2, 1, colCount);
+    var protection = userRange.protect().setDescription('User protected range');
+    var userEmail = sheet.getRange(row, 1, 5, 5).getValue().toString();
+    protection.removeEditors(protection.getEditors())
+    if (protection.canDomainEdit()) {
+      protection.setDomainEdit(false);
+    }
+    protection.addEditor(userEmail);
+  }
+}
+
+function addSumFormula(sheet, usersCount, colCount) {
+  var cell = sheet.getRange(2 + usersCount, 2, 1, colCount);
+  var strtemp = "=COUNTIF(R[-"+usersCount+"]C[0]:R[-1]C[0], \"*Норм*\")"
+  cell.setFormulaR1C1("=COUNTIF(R[-"+usersCount+"]C[0]:R[-1]C[0], \"*Норм*\")")
+}

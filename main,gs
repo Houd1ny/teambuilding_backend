@@ -1,8 +1,4 @@
-Date.prototype.plusDays = function(d){
-  var date = new Date()
-  date.setDate(this.getDate() + d);
-  return date;
-};
+
 
 var monthNames = ["Січня", "Лютого", "Березня", "Квітня", "Травня", "Червня",
   "Липня", "Серпня", "Вересня", "Жовтня", "Листопада", "Грудня"];
@@ -17,7 +13,7 @@ function createWeekSheet() {
   fillCells(newSpreadsheet, 2, 2, usersCount, daysRange)
   setUsersPermision(newSpreadsheet,usersCount, daysRange);
   addSumFormula(newSpreadsheet,usersCount, daysRange);
-  sendEmails(userEmails)
+  //sendEmails(userEmails)
 }
 
 function createSheetAndMakeCurrent(){
@@ -27,12 +23,24 @@ function createSheetAndMakeCurrent(){
   return newSheet;
 }
 
+function getMonday(d) {
+  d = new Date(d);
+  var day = d.getDay(),
+      diff = d.getDate() - day + (day == 0 ? -6:1); // adjust when day is sunday
+  return new Date(d.setDate(diff));
+}
+
+Date.prototype.plusDays = function(d){
+  var date = new Date(this.getTime());
+  date.setDate(this.getDate() + d);
+  return date;
+};
+
 function getSheetName(){
   var currentDate = new Date();
  
-  var first = currentDate.getDate() - currentDate.getDay();
-  var mondayDateObj = new Date(currentDate.setDate(first))
-  var sundayDateObj = mondayDateObj.plusDays(7)
+  var mondayDateObj = getMonday(currentDate)
+  var sundayDateObj = mondayDateObj.plusDays(6)
   
   var mondayDate = mondayDateObj.getDate()
   var sundayDate = sundayDateObj.getDate();

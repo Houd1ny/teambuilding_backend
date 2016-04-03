@@ -13,7 +13,7 @@ function createWeekSheet() {
   fillCells(newSpreadsheet, 2, 2, usersCount, daysRange)
   setUsersPermision(newSpreadsheet,usersCount, daysRange);
   addSumFormula(newSpreadsheet,usersCount, daysRange);
-  //sendEmails(userEmails)
+  sendEmails(userEmails)
 }
 
 function createSheetAndMakeCurrent(){

@@ -12,10 +12,12 @@ var dayNames = ["Понеділок", "Вівторок", "Середа", "Че�
 function createWeekSheet() {
   var newSpreadsheet = createSheetAndMakeCurrent();
   var daysRange = createDaysRow(newSpreadsheet)
-  var usersCount = createDrinkersColum(newSpreadsheet)
+  var userEmails = createDrinkersColum(newSpreadsheet)
+  var usersCount = userEmails.length
   fillCells(newSpreadsheet, 2, 2, usersCount, daysRange)
   setUsersPermision(newSpreadsheet,usersCount, daysRange);
   addSumFormula(newSpreadsheet,usersCount, daysRange);
+  sendEmails(userEmails)
 }
 
 function createSheetAndMakeCurrent(){
@@ -37,7 +39,8 @@ function getSheetName(){
   
   var mondayDateMonthName = monthNames[mondayDateObj.getMonth() ]
   var sundayDateMonthName = monthNames[sundayDateObj.getMonth() ]
-  return "Teambuilding(" + mondayDate.toString() + " " + mondayDateMonthName + "-" + sundayDate.toString() + " " + sundayDateMonthName + ")"
+  var currentYear = new Date().getFullYear()
+  return "Teambuilding(" + mondayDate.toString() + " " + mondayDateMonthName + "-" + sundayDate.toString() + " " + sundayDateMonthName + " " + currentYear +")"
 }
 
 function createDrinkersColum(sheet){
@@ -55,7 +58,7 @@ function createDrinkersColum(sheet){
   }
   
   sheet.autoResizeColumn(1);
-  return emails.length
+  return emails
 }
 
 function createDaysRow(sheet) {
@@ -105,4 +108,20 @@ function addSumFormula(sheet, usersCount, colCount) {
   var cell = sheet.getRange(2 + usersCount, 2, 1, colCount);
   var strtemp = "=COUNTIF(R[-"+usersCount+"]C[0]:R[-1]C[0], \"*Норм*\")"
   cell.setFormulaR1C1("=COUNTIF(R[-"+usersCount+"]C[0]:R[-1]C[0], \"*Норм*\")")
+}
+
+function sendEmails(emails) {
+  for (var i = 0; i < emails.length; ++i) {
+    var subject = getSheetName();
+    var message = "<p>Доброго часу доби</p>"
+    message += "<p>Відмідтьсь за бухач.</p>"
+    message += "<p><a href='" + SpreadsheetApp.getActiveSpreadsheet().getUrl() + "'>spreadsheets url</a></p>";
+    message += "<p>З повагою,</p>"
+    message += "<p>PM</p>"
+    MailApp.sendEmail({
+      to: emails[i],
+      subject: subject,
+      htmlBody: message
+    });
+  }
 }
